@@ -15,10 +15,11 @@ Imports:
     config,
     DT,
     golem,
+    readr,
     readxl,
     sessioninfo,
     shiny,
-    shinyWidgets,
+    shinyjs,
     stringr,
     utils
 Suggests: 

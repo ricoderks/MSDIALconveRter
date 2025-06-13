@@ -12,7 +12,8 @@ app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic
+    shinyjs::useShinyjs(),
+
     bslib::page_navbar(
       title = paste0("CPM - MSDIAL converter | v", utils::packageVersion("MSDIALconveRter")),
       bslib::nav_panel(

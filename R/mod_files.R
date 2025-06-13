@@ -9,7 +9,8 @@
 #' @importFrom shiny NS tagList
 #' @importFrom bslib navset_card_tab nav_panel card page_sidebar sidebar tooltip
 #' @importFrom bsicons bs_icon
-#' @importFrom DT dataTableOutput
+#' @importFrom DT dataTableOutput formatStyle
+#' @importFrom utils head
 #'
 mod_files_ui <- function(id) {
   ns <- NS(id)
@@ -63,7 +64,7 @@ mod_files_ui <- function(id) {
                 label = "Select omics :",
                 choices = c("Lipidomics" = "lip",
                             "Metabolomics" = "met"),
-                selected = "lip"
+                selected = "met"
               ),
               shiny::checkboxGroupInput(
                 inputId = ns("raw_which_files"),
@@ -76,13 +77,6 @@ mod_files_ui <- function(id) {
                 ),
                 choices = c("Positive" = "pos", "Negative" = "neg"),
                 selected = c("pos", "neg")
-              ),
-              shiny::selectInput(
-                inputId = ns("raw_select_table"),
-                label = "Select table",
-                choices = c("Raw table" = "raw_data",
-                            "Filtered table" = "clean_data_wide"),
-                selected = "clean_data"
               )
             ),
             bslib::card_body(
@@ -113,26 +107,6 @@ mod_files_ui <- function(id) {
                   outputId = ns("rawdata_preview_table")
                 ),
                 style = "font-size:75%;"
-              )
-            ),
-            bslib::card_body(
-              bslib::layout_column_wrap(
-                width = 1 / 2,
-                height = "15%",
-                shinyWidgets::progressBar(
-                  id = ns("sample_count_bar"),
-                  title = "Sample count",
-                  value = 0,
-                  total = 100,
-                  unit_mark = "%"
-                ),
-                shinyWidgets::progressBar(
-                  id = ns("feature_count_bar"),
-                  title = "Feature count",
-                  value = 0,
-                  total = 100,
-                  unit_mark = "%"
-                )
               )
             )
           )
@@ -179,17 +153,156 @@ mod_files_server <- function(id, r){
         )
       })
 
+
     output$metadata_preview_table <- DT::renderDataTable({
-      shiny::req(r$tables$meta_data)
+      shiny::req(r$tables$meta_data,
+                 r$meta$filename_col)
 
       data_table <- r$tables$meta_data
 
-      DT::datatable(data = data_table,
-                    rownames = FALSE,
-                    options = list(dom = "t",
-                                   pageLength = -1))
+      output_table <- DT::datatable(
+        data = data_table,
+        rownames = FALSE,
+        options = list(dom = "t",
+                       pageLength = -1)
+      )
+
+      if(!is.null(r$meta$filename_col)) {
+        output_table <- output_table |>
+          DT::formatStyle(
+            columns = r$meta$filename_col,
+            backgroundColor = "lightblue"
+          )
+      }
+
+      return(output_table)
     })
 
+
+    shiny::observeEvent(
+      c(input$metadata_select_filename), {
+        r$meta$filename_col <- input$metadata_select_filename
+      }
+    )
+
+    #------------------------------------------------------------- raw data ----
+    shiny::observeEvent(
+      input$raw_which_files,
+      {
+        if("pos" %in% input$raw_which_files) {
+          shinyjs::enable(id = "rawdata_pos_file")
+        } else {
+          shinyjs::disable(id = "rawdata_pos_file")
+        }
+
+        if("neg" %in% input$raw_which_files) {
+          shinyjs::enable(id = "rawdata_neg_file")
+        } else {
+          shinyjs::disable(id = "rawdata_neg_file")
+        }
+      },
+      ignoreNULL = FALSE
+    )
+
+
+    shiny::observeEvent(
+      input$rawdata_pos_file,
+      {
+        shiny::req(input$rawdata_pos_file)
+
+        print("Raw data read - pos file")
+        output$rawdata_status <- shiny::renderText({
+          ""
+        })
+        r$files$data_file_pos <- input$rawdata_pos_file
+        tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
+        if(any(tmp$`Adduct type` == "[M+H]+")) {
+          tmp$`Alignment ID` <- paste("pos", tmp$`Alignment ID`, sep = "_")
+          r$tables$pos_data <- tmp
+        } else {
+          shiny::showNotification(
+            ui = "Error: This data doesn't appear to contain any positive mode data!",
+            type = "error"
+          )
+          r$tables$pos_data <- NULL
+        }
+
+      })
+
+
+    shiny::observeEvent(
+      input$rawdata_neg_file,
+      {
+        shiny::req(input$rawdata_neg_file)
+
+        print("Raw data read - neg file")
+        output$rawdata_status <- shiny::renderText({
+          ""
+        })
+        r$files$data_file_neg <- input$rawdata_neg_file
+        tmp <- read_msdial(filename = input$rawdata_neg_file$datapath)
+        if(any(tmp$`Adduct type` == "[M-H]-")) {
+          tmp$`Alignment ID` <- paste("neg", tmp$`Alignment ID`, sep = "_")
+          r$tables$neg_data <- tmp
+        } else {
+          shiny::showNotification(
+            ui = "Error: This data doesn't appear to contain any negative mode data!",
+            type = "error"
+          )
+          r$tables$neg_data <- NULL
+        }
+
+      })
+
+
+    shiny::observeEvent(
+      c(input$rawdata_pos_file,
+        input$rawdata_neg_file),
+      {
+        shiny::req(r$meta$filename_col)
+
+        # is it neg or pos or both data
+        if(!is.null(r$tables$pos_data) & !is.null(r$tables$neg_data)) {
+          print("Combine data")
+          r$tables$raw_data <- rbind.data.frame(r$tables$pos_data,
+                                                r$tables$neg_data)
+        }
+        if(length(input$raw_which_files) == 1) {
+          if(!is.null(r$tables$pos_data)) {
+            r$tables$raw_data <- r$tables$pos_data
+          }
+          if(!is.null(r$tables$neg_data)) {
+            r$tables$raw_data <- r$tables$neg_data
+          }
+        }
+
+      })
+
+
+    output$rawdata_preview_table <- DT::renderDataTable({
+      shiny::req(r$tables$raw_data,
+                 r$tables$meta_data,
+                 r$meta$filename_col)
+
+      data_table <- r$tables$raw_data
+
+      output_table <- DT::datatable(
+        data = utils::head(data_table, n = 10),
+        rownames = FALSE,
+        options = list(dom = "t",
+                       pageLength = -1)
+      )
+
+      if(any(colnames(r$tables$raw_dat) %in% r$tables$meta_data[, r$meta$filename_col])) {
+        output_table <- output_table |>
+          DT::formatStyle(
+            columns = colnames(r$tables$raw_dat) %in% r$tables$meta_data[, r$meta$filename_col],
+            backgroundColor = "lightblue"
+          )
+      }
+
+      return(output_table)
+    })
   })
 }
 

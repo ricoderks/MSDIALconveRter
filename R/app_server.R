@@ -7,7 +7,8 @@
 #' @noRd
 #'
 app_server <- function(input, output, session) {
-  # Your application server logic
+  # increase upload limit
+  options(shiny.maxRequestSize = 30 * 1024^2)
 
   # for communication between the modules
   r <- shiny::reactiveValues(
@@ -20,7 +21,8 @@ app_server <- function(input, output, session) {
     tables = list(
       meta_data = NULL,
       pos_data = NULL,
-      neg_data = NULL
+      neg_data = NULL,
+      raw_data = NULL
     ),
     meta = list(
       filename_col = NULL
