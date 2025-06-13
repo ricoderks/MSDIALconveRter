@@ -1,0 +1,21 @@
+Package: MSDIALconveRter
+Title: Convert a MSDIAL result file into wide format
+Version: 0.0.0.9000
+Authors@R: 
+    person("Rico", "Derks", , "r.j.e.derks@lumc.nl", role = c("aut", "cre"))
+Description: Convert a MSDIAL result file into the format where the samples are on the rows and the features in the columns.
+License: GPL (>= 3)
+Imports: 
+    config,
+    golem,
+    shiny
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+URL: https://github.com/ricoderks/MSDIALconveRter
+BugReports: https://github.com/ricoderks/MSDIALconveRter/issues
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Language: en-US
