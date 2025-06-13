@@ -2,15 +2,27 @@
 #'
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
-#' @import shiny
+#' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
+#' @importFrom utils packageVersion
+#' @importFrom bslib page_navbar nav_panel nav_spacer nav_menu
+#'
 #' @noRd
+#'
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(
-      golem::golem_welcome_page() # Remove this line to start building your UI
+    bslib::page_navbar(
+      title = paste0("CPM - MSDIAL converter | v", utils::packageVersion("MSDIALconveRter")),
+      bslib::nav_panel(
+        title = "Files",
+        mod_files_ui(id = "files_1")
+      ),
+      bslib::nav_panel(
+        title = "About",
+        mod_about_ui(id = "about_1")
+      )
     )
   )
 }
@@ -20,7 +32,7 @@ app_ui <- function(request) {
 #' This function is internally used to add external
 #' resources inside the Shiny application.
 #'
-#' @import shiny
+#' @rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {
