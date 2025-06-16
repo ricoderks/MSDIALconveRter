@@ -122,6 +122,7 @@ mod_convert_server <- function(id, r){
         r$tables$convert_data <- NULL
         shiny::showNotification(
           ui = "ERROR: Can not create table! When 'Feature names' are selected as column names, the 'unknown' features need to be removed!",
+          duration = NULL,
           type = "error"
         )
       }
