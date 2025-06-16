@@ -186,6 +186,12 @@ mod_files_server <- function(id, r){
     )
 
     #------------------------------------------------------------- raw data ----
+    shiny::observeEvent(input$raw_select_omics, {
+      r$omics <- input$raw_select_omics
+      print(r$omics)
+    })
+
+
     shiny::observeEvent(
       input$raw_which_files,
       {

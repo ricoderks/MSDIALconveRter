@@ -20,7 +20,9 @@ Imports:
     sessioninfo,
     shiny,
     shinyjs,
+    shinyWidgets,
     stringr,
+    tidyr,
     utils
 Suggests: 
     spelling,

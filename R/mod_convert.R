@@ -1,0 +1,168 @@
+#' convert UI Function
+#'
+#' @description A shiny Module.
+#'
+#' @param id,input,output,session Internal parameters for {shiny}.
+#'
+#' @noRd
+#'
+#' @importFrom shiny NS tagList HTML showNotification
+#' @importFrom bslib card page_sidebar sidebar card_body tooltip layout_column_wrap
+#' @importFrom bsicons bs_icon
+#' @importFrom shinyWidgets progressBar updateProgressBar
+#'
+mod_convert_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    bslib::card(
+      bslib::page_sidebar(
+        sidebar = bslib::sidebar(
+          shiny::div(
+            shiny::actionButton(
+              inputId = ns("convert_btn"),
+              label = "Convert"
+            ),
+            shiny::hr(),
+            shiny::h4("Output options"),
+            shiny::radioButtons(
+              inputId = ns("convert_select_option"),
+              label = "Column names:",
+              choices = list("Feature names" = "names",
+                             "Feature ID's" = "ids")
+            ),
+            shiny::checkboxGroupInput(
+              inputId = ns("convert_remove"),
+              label = bslib::tooltip(
+                trigger = list(
+                  "Remove features:",
+                  bsicons::bs_icon(name = "info-circle")
+                ),
+                "Which features do you want to remove?"
+              ),
+              choices = c(
+                "Unknown" = "unknown",
+                "Low score" = "low score",
+                "no MS2" = "no MS2"
+              ),
+              selected = c("unknown", "low score", "no MS2")
+            ),
+            style = "font-size:85%"
+          ) # end div
+        ), # end side bar
+        bslib::card_body(
+          bslib::layout_column_wrap(
+            width = 1 / 2,
+            height = "25%",
+            shinyWidgets::progressBar(
+              id = ns("sample_count_bar"),
+              title = "Sample count",
+              value = 0,
+              total = 1,
+              unit_mark = "%"
+            ),
+            shinyWidgets::progressBar(
+              id = ns("feature_count_bar"),
+              title = "Feature count",
+              value = 0,
+              total = 1,
+              unit_mark = "%"
+            )
+          )
+        ),
+        bslib::card_body(
+          shiny::div(
+            DT::dataTableOutput(
+              outputId = ns("convertdata_preview_table")
+            ),
+            style = "font-size:75%;"
+          )
+        )
+      )
+    )
+  )
+}
+
+#' convert Server Functions
+#'
+#' @param r reactive values for communication between modules.
+#'
+#' @noRd
+#'
+mod_convert_server <- function(id, r){
+  moduleServer(id, function(input, output, session){
+    ns <- session$ns
+
+    observeEvent(input$convert_btn, {
+      shiny::req(r$tables$raw_data,
+                 input$convert_select_option,
+                 r$omics)
+
+      if(!(is.null(input$convert_remove) & input$convert_select_option == "names")) {
+        print("Convert data")
+        r$tables$convert_data <- convert_data(
+          data = r$tables$raw_data,
+          selected_cols = r$tables$meta_data[, r$meta$filename_col],
+          clean = input$convert_remove,
+          option = input$convert_select_option,
+          omics = r$omics
+        )
+      } else {
+        r$tables$convert_data <- NULL
+        shiny::showNotification(
+          ui = "ERROR: Can not create table! When 'Feature names' are selected as column names, the 'unknown' features need to be removed!",
+          type = "error"
+        )
+      }
+    })
+
+
+    output$convertdata_preview_table <- DT::renderDataTable({
+      shiny::req(r$tables$convert_data)
+
+      print("Show table")
+      data_table <- r$tables$convert_data
+      print(dim(data_table))
+      print(data_table)
+
+      shinyWidgets::updateProgressBar(
+        session = session,
+        id = "sample_count_bar",
+        title = "Sample count",
+        value = nrow(data_table),
+        total = length(r$tables$meta_data[, r$meta$filename_col])
+      )
+
+      shinyWidgets::updateProgressBar(
+        session = session,
+        id = "feature_count_bar",
+        title = "Feature count",
+        value = ncol(data_table) - 1,
+        total = nrow(r$tables$raw_data)
+      )
+
+      if(ncol(data_table) > 100) {
+        data_table <- data_table[, 1:100]
+        shiny::showNotification(
+          ui = "INFO: Only the first 100 columns are shown!",
+          type = "message"
+        )
+      }
+
+      output_table <- DT::datatable(
+        data = data_table,
+        rownames = FALSE,
+        options = list(dom = "t",
+                       pageLength = -1)
+      )
+
+      return(output_table)
+    })
+
+  })
+}
+
+## To be copied in the UI
+# mod_convert_ui("convert_1")
+
+## To be copied in the server
+# mod_convert_server("convert_1")

@@ -20,12 +20,14 @@ attachment::att_amend_desc()
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module(name = "files", with_test = TRUE) # Name of the module
-golem::add_module(name = "about", with_test = TRUE) # Name of the module
+golem::add_module(name = "files", with_test = TRUE)
+golem::add_module(name = "convert", with_test = TRUE)
+golem::add_module(name = "about", with_test = TRUE)
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct("files", with_test = TRUE)
+golem::add_fct("convert", with_test = TRUE)
 golem::add_utils("helpers", with_test = TRUE)
 
 ## External resources

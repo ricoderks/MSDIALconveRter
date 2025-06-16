@@ -21,6 +21,10 @@ app_ui <- function(request) {
         mod_files_ui(id = "files_1")
       ),
       bslib::nav_panel(
+        title = "Convert",
+        mod_convert_ui(id = "convert_1")
+      ),
+      bslib::nav_panel(
         title = "About",
         mod_about_ui(id = "about_1")
       )
