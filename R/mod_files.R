@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList showNotification HTML
 #' @importFrom bslib navset_card_tab nav_panel card page_sidebar sidebar tooltip
 #' @importFrom bsicons bs_icon
 #' @importFrom DT dataTableOutput formatStyle
@@ -216,23 +216,31 @@ mod_files_server <- function(id, r){
       {
         shiny::req(input$rawdata_pos_file)
 
-        print("Raw data read - pos file")
-        output$rawdata_status <- shiny::renderText({
-          ""
-        })
-        r$files$data_file_pos <- input$rawdata_pos_file
-        tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
-        if(any(tmp$`Adduct type` == "[M+H]+")) {
-          tmp$`Alignment ID` <- paste("pos", tmp$`Alignment ID`, sep = "_")
-          r$tables$pos_data <- tmp
+        if(!is.null(r$tables$meta_data)) {
+          print("Raw data read - pos file")
+          output$rawdata_status <- shiny::renderText({
+            ""
+          })
+          r$files$data_file_pos <- input$rawdata_pos_file
+          tmp <- read_msdial(filename = input$rawdata_pos_file$datapath)
+          if(any(tmp$`Adduct type` == "[M+H]+")) {
+            tmp$`Alignment ID` <- paste("pos", tmp$`Alignment ID`, sep = "_")
+            r$tables$pos_data <- tmp
+          } else {
+            shiny::showNotification(
+              ui = "Error: This data doesn't appear to contain any positive mode data!",
+              duration = NULL,
+              type = "error"
+            )
+            r$tables$pos_data <- NULL
+          }
         } else {
           shiny::showNotification(
-            ui = "Error: This data doesn't appear to contain any positive mode data!",
+            ui = shiny::HTML("ERROR: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
+            duration = NULL,
             type = "error"
           )
-          r$tables$pos_data <- NULL
         }
-
       })
 
 
@@ -241,23 +249,31 @@ mod_files_server <- function(id, r){
       {
         shiny::req(input$rawdata_neg_file)
 
-        print("Raw data read - neg file")
-        output$rawdata_status <- shiny::renderText({
-          ""
-        })
-        r$files$data_file_neg <- input$rawdata_neg_file
-        tmp <- read_msdial(filename = input$rawdata_neg_file$datapath)
-        if(any(tmp$`Adduct type` == "[M-H]-")) {
-          tmp$`Alignment ID` <- paste("neg", tmp$`Alignment ID`, sep = "_")
-          r$tables$neg_data <- tmp
+        if(!is.null(r$tables$meta_data)) {
+          print("Raw data read - neg file")
+          output$rawdata_status <- shiny::renderText({
+            ""
+          })
+          r$files$data_file_neg <- input$rawdata_neg_file
+          tmp <- read_msdial(filename = input$rawdata_neg_file$datapath)
+          if(any(tmp$`Adduct type` == "[M-H]-")) {
+            tmp$`Alignment ID` <- paste("neg", tmp$`Alignment ID`, sep = "_")
+            r$tables$neg_data <- tmp
+          } else {
+            shiny::showNotification(
+              ui = "Error: This data doesn't appear to contain any negative mode data!",
+              duration = NULL,
+              type = "error"
+            )
+            r$tables$neg_data <- NULL
+          }
         } else {
           shiny::showNotification(
-            ui = "Error: This data doesn't appear to contain any negative mode data!",
+            ui = shiny::HTML("ERROR: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
+            duration = NULL,
             type = "error"
           )
-          r$tables$neg_data <- NULL
         }
-
       })
 
 
