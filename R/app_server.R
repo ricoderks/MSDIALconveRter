@@ -23,7 +23,8 @@ app_server <- function(input, output, session) {
       pos_data = NULL,
       neg_data = NULL,
       raw_data = NULL,
-      convert_data = NULL
+      convert_data = NULL,
+      feature_data = NULL
     ),
     meta = list(
       filename_col = NULL

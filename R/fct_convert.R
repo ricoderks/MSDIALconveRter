@@ -1,6 +1,7 @@
 #' convert
 #'
-#' @description Convert the data.frame to a format suited for iSODA
+#' @description Extract the experimental data and featuer data and convert them
+#' to a data.frame in a format suited for iSODA
 #'
 #' @param data data.frame.
 #' @param selected_cols character() containing the column names.
@@ -9,7 +10,7 @@
 #' @param option integer(1) which convert step to do.
 #' @param omics character(1) which omics are we using.
 #'
-#' @return The return value, if any, from executing the function.
+#' @returns list with the experimental data and feature data.
 #'
 #' @noRd
 #'
@@ -17,7 +18,7 @@
 #'
 #' @author Rico Derks
 #'
-convert_data <- function(data = NULL,
+extract_data <- function(data = NULL,
                          selected_cols = NULL,
                          clean = NULL,
                          duplicates = c("sum", "average", "rename"),
@@ -41,10 +42,10 @@ convert_data <- function(data = NULL,
     "names" = "Metabolite name"
   )
 
-  clean_data <- process_duplicates(data = clean_data[, c(names_from, selected_cols)],
-                                   duplicates = duplicates)
+  dupl_data <- process_duplicates(data = clean_data[, c(names_from, selected_cols)],
+                                  duplicates = duplicates)
 
-  data_long <- clean_data |>
+  data_long <- dupl_data |>
     tidyr::pivot_longer(
       cols = selected_cols,
       names_to = "sampleId",
@@ -58,7 +59,28 @@ convert_data <- function(data = NULL,
       values_from = "peakArea"
     )
 
-  return(data_wide)
+  feature_data <- clean_data[clean_data[, names_from] %in% colnames(data_wide)[-1], c("Alignment ID", "Metabolite name", "Ontology", "Adduct type")]
+  if(duplicates == "rename") {
+    feature_data$`Alignment ID` <- make.unique(names = feature_data$`Alignment ID`,
+                                               sep = "_")
+    feature_data$`Metabolite name` <- make.unique(names = feature_data$`Metabolite name`,
+                                                  sep = "_")
+  } else {
+    feature_data <- aggregate(x = feature_data,
+                              by = list(feature_data[, names_from]),
+                              FUN = function(x) {
+                                paste(x, sep = ",")
+                              })
+
+    colnames(feature_data)[1] <- ifelse(option == "ids",
+                                        "Alignment ID",
+                                        "Metabolite Name")
+
+
+  }
+  print(head(feature_data))
+  return(list(exp_data = data_wide,
+              feature_data = feature_data))
 }
 
 

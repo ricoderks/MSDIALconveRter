@@ -6,7 +6,7 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList HTML showNotification
+#' @importFrom shiny NS tagList HTML showNotification downloadButton downloadHandler
 #' @importFrom bslib card page_sidebar sidebar card_body tooltip layout_column_wrap
 #' @importFrom bsicons bs_icon
 #' @importFrom shinyWidgets progressBar updateProgressBar
@@ -18,9 +18,12 @@ mod_convert_ui <- function(id) {
       bslib::page_sidebar(
         sidebar = bslib::sidebar(
           shiny::div(
-            shiny::actionButton(
-              inputId = ns("convert_btn"),
-              label = "Convert"
+            shiny::div(
+              shiny::actionButton(
+                inputId = ns("convert_btn"),
+                label = "Convert"
+              ),
+              style = "display:flex;justify-content:center"
             ),
             shiny::hr(),
             shiny::h4("Output options"),
@@ -55,6 +58,22 @@ mod_convert_ui <- function(id) {
                 "Rename" = "rename"
               ),
               selected = "rename"
+            ),
+            shiny::hr(),
+            shiny::div(
+              shiny::downloadButton(
+                outputId = ns("convert_download_expdata"),
+                label = "Download data"
+              ),
+              style = "display:flex;justify-content:center"
+            ),
+            shiny::p(),
+            shiny::div(
+              shiny::downloadButton(
+                outputId = ns("convert_download_featuredata"),
+                label = "Download feature data"
+              ),
+              style = "display:flex;justify-content:center"
             ),
             style = "font-size:85%"
           ) # end div
@@ -110,7 +129,7 @@ mod_convert_server <- function(id, r){
 
       if(!(is.null(input$convert_remove) & input$convert_select_option == "names")) {
         print("Convert data")
-        r$tables$convert_data <- convert_data(
+        res <- extract_data(
           data = r$tables$raw_data,
           selected_cols = r$tables$meta_data[, r$meta$filename_col],
           clean = input$convert_remove,
@@ -118,6 +137,9 @@ mod_convert_server <- function(id, r){
           option = input$convert_select_option,
           omics = r$omics
         )
+
+        r$tables$convert_data <- res$exp_data
+        r$tables$feature_data <- res$feature_data
       } else {
         r$tables$convert_data <- NULL
         shiny::showNotification(
@@ -168,6 +190,26 @@ mod_convert_server <- function(id, r){
 
       return(output_table)
     })
+
+
+    output$convert_download_expdata <- shiny::downloadHandler(
+      filename = "experiment_data.csv",
+      content = function(file) {
+        write.csv(x = r$tables$convert_data,
+                  file = file,
+                  row.names = FALSE)
+      }
+    )
+
+
+    output$convert_download_featuredata <- shiny::downloadHandler(
+      filename = "feature_data.csv",
+      content = function(file) {
+        write.csv(x = r$tables$feature_data,
+                  file = file,
+                  row.names = FALSE)
+      }
+    )
 
   })
 }
