@@ -46,6 +46,16 @@ mod_convert_ui <- function(id) {
               ),
               selected = c("unknown", "low score", "no MS2")
             ),
+            shiny::radioButtons(
+              inputId = ns("convert_duplicates"),
+              label = "Duplicates:",
+              choices = list(
+                "Sum" = "sum",
+                "Average" = "average",
+                "Rename" = "rename"
+              ),
+              selected = "rename"
+            ),
             style = "font-size:85%"
           ) # end div
         ), # end side bar
@@ -95,6 +105,7 @@ mod_convert_server <- function(id, r){
     observeEvent(input$convert_btn, {
       shiny::req(r$tables$raw_data,
                  input$convert_select_option,
+                 input$convert_duplicates,
                  r$omics)
 
       if(!(is.null(input$convert_remove) & input$convert_select_option == "names")) {
@@ -103,6 +114,7 @@ mod_convert_server <- function(id, r){
           data = r$tables$raw_data,
           selected_cols = r$tables$meta_data[, r$meta$filename_col],
           clean = input$convert_remove,
+          duplicates = input$convert_duplicates,
           option = input$convert_select_option,
           omics = r$omics
         )
@@ -121,8 +133,6 @@ mod_convert_server <- function(id, r){
 
       print("Show table")
       data_table <- r$tables$convert_data
-      print(dim(data_table))
-      print(data_table)
 
       shinyWidgets::updateProgressBar(
         session = session,

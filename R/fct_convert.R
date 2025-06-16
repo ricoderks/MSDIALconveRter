@@ -5,6 +5,7 @@
 #' @param data data.frame.
 #' @param selected_cols character() containing the column names.
 #' @param clean character() what to clean.
+#' @param duplicates character(1), what to do with duplicates.
 #' @param option integer(1) which convert step to do.
 #' @param omics character(1) which omics are we using.
 #'
@@ -19,6 +20,7 @@
 convert_data <- function(data = NULL,
                          selected_cols = NULL,
                          clean = NULL,
+                         duplicates = c("sum", "average", "rename"),
                          option = c("names", "ids"),
                          omics = c("lip", "met")) {
   omics <- match.arg(arg = omics,
@@ -33,18 +35,21 @@ convert_data <- function(data = NULL,
     clean_data <- data
   }
 
+  names_from <- switch(
+    option,
+    "ids" = "Alignment ID",
+    "names" = "Metabolite name"
+  )
+
+  clean_data <- process_duplicates(data = clean_data[, c(names_from, selected_cols)],
+                                   duplicates = duplicates)
+
   data_long <- clean_data |>
     tidyr::pivot_longer(
       cols = selected_cols,
       names_to = "sampleId",
       values_to = "peakArea"
     )
-
-  names_from <- switch(
-    option,
-    "ids" = "Alignment ID",
-    "names" = "Metabolite name"
-  )
 
   data_wide <- data_long |>
     tidyr::pivot_wider(
@@ -85,5 +90,110 @@ clean_features <- function(data = NULL,
 }
 
 
+#' @title Process duplicate columns
+#'
+#' @description
+#' Process duplicate columns in different ways.
+#'
+#' @param data data.frame.
+#' @param duplicates character(1), what to do with duplicates (i.e. sum, average or rename the columns).
+#'
+#' @returns data.frame with no duplicate columns anymore.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+process_duplicates <- function(data = NULL,
+                               duplicates = c("sum", "average", "rename")) {
+  duplicates <- match.arg(arg = duplicates,
+                          choices = c("sum", "average", "rename"))
+
+  res <- switch(
+    duplicates,
+    "sum" = sum.process_duplicates(data = data),
+    "average" = average.process_duplicates(data = data),
+    "rename" = rename.process_duplicates(data = data)
+  )
+
+  return(res)
+}
 
 
+#' @title Sum duplicates
+#'
+#' @description
+#' Sum duplicates.
+#'
+#' @param data data.frame.
+#'
+#' @returns data.frame.
+#'
+#' @importFrom stats aggregate
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+sum.process_duplicates <- function(data = NULL) {
+  res <- stats::aggregate(x = data[, -1],
+                          by = list(data[, 1]),
+                          FUN = function(x) {
+                            sum(x, na.rm = TRUE)
+                          })
+
+  colnames(res)[1] <- colnames(data)[1]
+
+  return(res)
+}
+
+
+#' @title Average duplicates
+#'
+#' @description
+#' Average duplicates.
+#'
+#' @param data data.frame.
+#'
+#' @returns data.frame.
+#'
+#' @importFrom stats aggregate
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+average.process_duplicates <- function(data = NULL) {
+  res <- stats::aggregate(x = data[, -1],
+                          by = list(data[, 1]),
+                          FUN = function(x) {
+                            mean(x, na.rm = TRUE)
+                          })
+
+  colnames(res)[1] <- colnames(data)[1]
+
+  return(res)
+}
+
+
+#' @title Rename duplicates
+#'
+#' @description
+#' Rename duplicates.
+#'
+#' @param data data.frame.
+#'
+#' @returns data.frame.
+#'
+#' @noRd
+#'
+#' @author Rico Derks
+#'
+rename.process_duplicates <- function(data = NULL) {
+  res <- data
+
+  res[, 1] <- make.unique(names = res[, 1],
+                          sep = "_")
+
+  return(res)
+}

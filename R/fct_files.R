@@ -195,6 +195,8 @@ read_msdial <- function(filename = NULL) {
                              skip = 4)
   }
 
+  res <- as.data.frame(res,
+                       check.names = FALSE)
 
 
   return(res)

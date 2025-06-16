@@ -21,6 +21,7 @@ Imports:
     shiny,
     shinyjs,
     shinyWidgets,
+    stats,
     stringr,
     tidyr,
     utils
