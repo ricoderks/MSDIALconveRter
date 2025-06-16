@@ -197,14 +197,22 @@ mod_files_server <- function(id, r){
       {
         if("pos" %in% input$raw_which_files) {
           shinyjs::enable(id = "rawdata_pos_file")
+          r$tables$raw_data <- NULL
         } else {
           shinyjs::disable(id = "rawdata_pos_file")
+          if(!is.null(r$tables$neg_data)) {
+            r$tables$raw_data <- r$tables$neg_data
+          }
         }
 
         if("neg" %in% input$raw_which_files) {
           shinyjs::enable(id = "rawdata_neg_file")
+          r$tables$raw_data <- NULL
         } else {
           shinyjs::disable(id = "rawdata_neg_file")
+          if(!is.null(r$tables$pos_data)) {
+            r$tables$raw_data <- r$tables$pos_data
+          }
         }
       },
       ignoreNULL = FALSE
