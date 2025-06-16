@@ -226,9 +226,17 @@ mod_files_server <- function(id, r){
           if(any(tmp$`Adduct type` == "[M+H]+")) {
             tmp$`Alignment ID` <- paste("pos", tmp$`Alignment ID`, sep = "_")
             r$tables$pos_data <- tmp
+            if(!any(r$tables$meta_data[, r$meta$filename_col] %in% colnames(r$tables$pos_data))) {
+              shiny::showNotification(
+                ui = shiny::HTML("<b>ERROR</b>: Selected file names from meta data file <b>NOT</b> found in MSDIAL result file!"),
+                duration = NULL,
+                type = "error"
+              )
+              r$tables$pos_data <- NULL
+            }
           } else {
             shiny::showNotification(
-              ui = "Error: This data doesn't appear to contain any positive mode data!",
+              ui = shiny::HTML("<b>ERROR</b>: This data doesn't appear to contain any positive mode data!"),
               duration = NULL,
               type = "error"
             )
@@ -236,7 +244,7 @@ mod_files_server <- function(id, r){
           }
         } else {
           shiny::showNotification(
-            ui = shiny::HTML("ERROR: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
+            ui = shiny::HTML("<b>ERROR</b>: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
             duration = NULL,
             type = "error"
           )
@@ -259,9 +267,17 @@ mod_files_server <- function(id, r){
           if(any(tmp$`Adduct type` == "[M-H]-")) {
             tmp$`Alignment ID` <- paste("neg", tmp$`Alignment ID`, sep = "_")
             r$tables$neg_data <- tmp
+            if(!any(r$tables$meta_data[, r$meta$filename_col] %in% colnames(r$tables$pos_data))) {
+              shiny::showNotification(
+                ui = shiny::HTML("<b>ERROR</b>: Selected file names from meta data file <b>NOT</b> found in MSDIAL result file!"),
+                duration = NULL,
+                type = "error"
+              )
+              r$tables$neg_data <- NULL
+            }
           } else {
             shiny::showNotification(
-              ui = "Error: This data doesn't appear to contain any negative mode data!",
+              ui = shiny::HTML("<b>ERROR</b>: This data doesn't appear to contain any negative mode data!"),
               duration = NULL,
               type = "error"
             )
@@ -269,7 +285,7 @@ mod_files_server <- function(id, r){
           }
         } else {
           shiny::showNotification(
-            ui = shiny::HTML("ERROR: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
+            ui = shiny::HTML("<b>ERROR</b>: Not possible to load MSDIAL result file! Please load a <b>meta data file</b> first!"),
             duration = NULL,
             type = "error"
           )
