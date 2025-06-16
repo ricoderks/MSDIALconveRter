@@ -111,7 +111,7 @@ process_duplicates <- function(data = NULL,
 
   res <- switch(
     duplicates,
-    "sum" = sum.process_duplicates(data = data),
+    "sum" = sums.process_duplicates(data = data),
     "average" = average.process_duplicates(data = data),
     "rename" = rename.process_duplicates(data = data)
   )
@@ -135,7 +135,7 @@ process_duplicates <- function(data = NULL,
 #'
 #' @author Rico Derks
 #'
-sum.process_duplicates <- function(data = NULL) {
+sums.process_duplicates <- function(data = NULL) {
   res <- stats::aggregate(x = data[, -1],
                           by = list(data[, 1]),
                           FUN = function(x) {
