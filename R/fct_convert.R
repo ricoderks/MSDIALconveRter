@@ -172,6 +172,12 @@ extract_data.lip <- function(data = NULL,
       values_from = "peakArea"
     )
 
+  lipids <- colnames(data_wide)[-1]
+  idx <- !grepl(x = lipids,
+                pattern = "\\|")
+  lipids[idx] <- paste(lipids[idx], lipids[idx], sep = "|")
+  colnames(data_wide)[-1] <- lipids
+
   feature_data <- clean_data[clean_data[, "Metabolite name"] %in% colnames(data_wide)[-1], c("Alignment ID", "Metabolite name", "Ontology", "Adduct type")]
   if(duplicates == "rename") {
     feature_data$`Metabolite name` <- make.unique(names = feature_data$`Metabolite name`,
