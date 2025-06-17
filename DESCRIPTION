@@ -9,6 +9,8 @@ Description: Convert a MSDIAL result file into the format where the
 License: GPL (>= 3)
 URL: https://github.com/ricoderks/MSDIALconveRter
 BugReports: https://github.com/ricoderks/MSDIALconveRter/issues
+Depends:
+    R (>= 4.1.0)
 Imports: 
     bsicons,
     bslib,

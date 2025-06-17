@@ -69,16 +69,13 @@ extract_data <- function(data = NULL,
     feature_data <- aggregate(x = feature_data,
                               by = list(feature_data[, names_from]),
                               FUN = function(x) {
-                                paste(x, sep = ",")
+                                paste(x, collapse = ",")
                               })
 
-    colnames(feature_data)[1] <- ifelse(option == "ids",
-                                        "Alignment ID",
-                                        "Metabolite Name")
-
-
+    feature_data <- feature_data[, !(colnames(feature_data) %in% names_from)]
+    colnames(feature_data)[1] <- names_from
   }
-  print(head(feature_data))
+
   return(list(exp_data = data_wide,
               feature_data = feature_data))
 }

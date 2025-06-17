@@ -10,6 +10,7 @@
 #' @importFrom bslib card page_sidebar sidebar card_body tooltip layout_column_wrap
 #' @importFrom bsicons bs_icon
 #' @importFrom shinyWidgets progressBar updateProgressBar
+#' @importFrom utils write.csv
 #'
 mod_convert_ui <- function(id) {
   ns <- NS(id)
@@ -195,9 +196,9 @@ mod_convert_server <- function(id, r){
     output$convert_download_expdata <- shiny::downloadHandler(
       filename = "experiment_data.csv",
       content = function(file) {
-        write.csv(x = r$tables$convert_data,
-                  file = file,
-                  row.names = FALSE)
+        utils::write.csv(x = r$tables$convert_data,
+                         file = file,
+                         row.names = FALSE)
       }
     )
 
@@ -205,9 +206,9 @@ mod_convert_server <- function(id, r){
     output$convert_download_featuredata <- shiny::downloadHandler(
       filename = "feature_data.csv",
       content = function(file) {
-        write.csv(x = r$tables$feature_data,
-                  file = file,
-                  row.names = FALSE)
+        utils::write.csv(x = r$tables$feature_data,
+                         file = file,
+                         row.names = FALSE)
       }
     )
 
