@@ -27,38 +27,8 @@ mod_convert_ui <- function(id) {
               style = "display:flex;justify-content:center"
             ),
             shiny::hr(),
-            shiny::h4("Output options"),
-            shiny::radioButtons(
-              inputId = ns("convert_select_option"),
-              label = "Column names:",
-              choices = list("Feature names" = "names",
-                             "Feature ID's" = "ids")
-            ),
-            shiny::checkboxGroupInput(
-              inputId = ns("convert_remove"),
-              label = bslib::tooltip(
-                trigger = list(
-                  "Remove features:",
-                  bsicons::bs_icon(name = "info-circle")
-                ),
-                "Which features do you want to remove?"
-              ),
-              choices = c(
-                "Unknown" = "unknown",
-                "Low score" = "low score",
-                "no MS2" = "no MS2"
-              ),
-              selected = c("unknown", "low score", "no MS2")
-            ),
-            shiny::radioButtons(
-              inputId = ns("convert_duplicates"),
-              label = "Duplicates:",
-              choices = list(
-                "Sum" = "sum",
-                "Average" = "average",
-                "Rename" = "rename"
-              ),
-              selected = "rename"
+            shiny::uiOutput(
+              outputId = ns("convert_ui")
             ),
             shiny::hr(),
             shiny::div(
@@ -122,32 +92,118 @@ mod_convert_server <- function(id, r){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+
+    output$convert_ui <- shiny::renderUI({
+      shiny::req(r$omics)
+
+      switch(
+        r$omics,
+        "met" = shiny::tagList(
+          shiny::h4("Output options"),
+          shiny::radioButtons(
+            inputId = ns("convert_select_option"),
+            label = "Column names:",
+            choices = list("Feature names" = "names",
+                           "Feature ID's" = "ids")
+          ),
+          shiny::checkboxGroupInput(
+            inputId = ns("convert_remove"),
+            label = bslib::tooltip(
+              trigger = list(
+                "Remove features:",
+                bsicons::bs_icon(name = "info-circle")
+              ),
+              "Which features do you want to remove?"
+            ),
+            choices = c(
+              "Unknown" = "unknown",
+              "Low score" = "low score",
+              "no MS2" = "no MS2"
+            ),
+            selected = c("unknown", "low score", "no MS2")
+          ),
+          shiny::radioButtons(
+            inputId = ns("convert_duplicates"),
+            label = "Duplicates:",
+            choices = list(
+              "Sum" = "sum",
+              "Average" = "average",
+              "Rename" = "rename"
+            ),
+            selected = "rename"
+          )
+        ),
+        "lip" = shiny::tagList(
+          shiny::checkboxGroupInput(
+            inputId = ns("convert_remove"),
+            label = bslib::tooltip(
+              trigger = list(
+                "Remove features:",
+                bsicons::bs_icon(name = "info-circle")
+              ),
+              "Which features do you want to remove?"
+            ),
+            choices = c(
+              "Unknown" = "unknown",
+              "Low score" = "low score",
+              "no MS2" = "no MS2"
+            ),
+            selected = c("unknown", "low score", "no MS2")
+          ),
+          shiny::radioButtons(
+            inputId = ns("convert_duplicates"),
+            label = "Duplicates:",
+            choices = list(
+              "Sum" = "sum",
+              "Average" = "average",
+              "Rename" = "rename"
+            ),
+            selected = "rename"
+          )
+        )
+      )
+
+    })
+
+
     observeEvent(input$convert_btn, {
       shiny::req(r$tables$raw_data,
-                 input$convert_select_option,
                  input$convert_duplicates,
                  r$omics)
-
-      if(!(is.null(input$convert_remove) & input$convert_select_option == "names")) {
+      if(r$omics == "lip") {
         print("Convert data")
         res <- extract_data(
           data = r$tables$raw_data,
           selected_cols = r$tables$meta_data[, r$meta$filename_col],
           clean = input$convert_remove,
           duplicates = input$convert_duplicates,
-          option = input$convert_select_option,
           omics = r$omics
         )
 
         r$tables$convert_data <- res$exp_data
         r$tables$feature_data <- res$feature_data
       } else {
-        r$tables$convert_data <- NULL
-        shiny::showNotification(
-          ui = "ERROR: Can not create table! When 'Feature names' are selected as column names, the 'unknown' features need to be removed!",
-          duration = NULL,
-          type = "error"
-        )
+        if(!(is.null(input$convert_remove) & input$convert_select_option == "names")) {
+          print("Convert data")
+          res <- extract_data(
+            data = r$tables$raw_data,
+            selected_cols = r$tables$meta_data[, r$meta$filename_col],
+            clean = input$convert_remove,
+            duplicates = input$convert_duplicates,
+            option = input$convert_select_option,
+            omics = r$omics
+          )
+
+          r$tables$convert_data <- res$exp_data
+          r$tables$feature_data <- res$feature_data
+        } else {
+          r$tables$convert_data <- NULL
+          shiny::showNotification(
+            ui = "ERROR: Can not create table! When 'Feature names' are selected as column names, the 'unknown' features need to be removed!",
+            duration = NULL,
+            type = "error"
+          )
+        }
       }
     })
 
